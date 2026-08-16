@@ -1,5 +1,5 @@
 #pragma once
-#include <JuceHeader.h>
+#include <juce_gui_extra/juce_gui_extra.h>
 #include "PluginProcessor.h"
 
 class BPM2HzAudioProcessorEditor  : public juce::AudioProcessorEditor, private juce::Timer
