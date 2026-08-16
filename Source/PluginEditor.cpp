@@ -74,9 +74,14 @@ void BPM2HzAudioProcessorEditor::paint (juce::Graphics& g)
     auto height = static_cast<float> (getHeight());
 
     // -------------------------------------------------------------
-    // 1. SFONDO REALE DA IMMAGINE (BRUSHED METAL.jpg)
+    // 1. SFONDO DA IMMAGINE (brushed_metal.jpg)
     // -------------------------------------------------------------
-    auto bgMetal = juce::ImageCache::getFromMemory (BinaryData::BRUSHED_METAL_jpg, BinaryData::BRUSHED_METAL_jpgSize);
+    int bgSize = 0;
+    const char* bgData = BinaryData::getNamedResource ("brushed_metal_jpg", bgSize);
+    if (bgData == nullptr)
+        bgData = BinaryData::getNamedResource ("brushed_metal.jpg", bgSize);
+
+    auto bgMetal = juce::ImageCache::getFromMemory (bgData, bgSize);
     
     if (bgMetal.isValid())
     {
@@ -110,9 +115,14 @@ void BPM2HzAudioProcessorEditor::paint (juce::Graphics& g)
     g.drawRoundedRectangle (headerBox, 8.0f, 1.0f);
 
     // -------------------------------------------------------------
-    // LOGO DÆBÆR (Trasparente senza cerchio o sfondo dietro)
+    // LOGO DÆBÆR
     // -------------------------------------------------------------
-    auto logoImage = juce::ImageCache::getFromMemory (BinaryData::daebaer_logo_png, BinaryData::daebaer_logo_pngSize);
+    int logoSize = 0;
+    const char* logoData = BinaryData::getNamedResource ("daebaer_logo_png", logoSize);
+    if (logoData == nullptr)
+        logoData = BinaryData::getNamedResource ("daebaer_logo.png", logoSize);
+
+    auto logoImage = juce::ImageCache::getFromMemory (logoData, logoSize);
     if (logoImage.isValid())
     {
         g.drawImageWithin (logoImage, 25, 20, 90, 90, juce::RectanglePlacement::centred);
