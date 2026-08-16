@@ -2,12 +2,31 @@
 #include "PluginProcessor.h"
 #include <BinaryData.h>
 
+// Helper per la formattazione del tempo (ms o s)
+static juce::String formatTime (double ms)
+{
+    if (ms >= 1000.0)
+        return juce::String (ms / 1000.0, 2) + " s";
+    
+    return juce::String (ms, 1) + " ms";
+}
+
+// Helper per la formattazione della frequenza (Hz o kHz)
+static juce::String formatFreq (double hz)
+{
+    if (hz >= 1000.0)
+        return juce::String (hz / 1000.0, 2) + " kHz";
+    
+    return juce::String (hz, 2) + " Hz";
+}
+
 BPM2HzAudioProcessorEditor::BPM2HzAudioProcessorEditor (BPM2HzAudioProcessor& p)
     : AudioProcessorEditor (&p), processorRef (p)
 {
     setSize (750, 510);
 
     addAndMakeVisible (syncButton);
+    syncButton.setButtonText ("DAW SYNC");
     syncButton.setColour (juce::ToggleButton::textColourId, juce::Colours::white);
     syncButton.setColour (juce::ToggleButton::tickColourId, juce::Colours::cyan);
 
@@ -35,13 +54,11 @@ void BPM2HzAudioProcessorEditor::timerCallback()
 
     if (isSynced)
     {
-        // Disabilita l'interazione ma aggiorna il valore visivo con quello rilevato dalla DAW
         bpmSlider.setEnabled (false);
         bpmSlider.setValue (processorRef.currentBpm, juce::dontSendNotification);
     }
     else
     {
-        // Riabilita la manopola per il controllo manuale
         bpmSlider.setEnabled (true);
     }
 
@@ -63,7 +80,7 @@ void BPM2HzAudioProcessorEditor::paint (juce::Graphics& g)
 
     g.setColour (juce::Colours::white);
     g.setFont (juce::FontOptions (22.0f, juce::Font::bold));
-    g.drawText (juce::String (juce::CharPointer_UTF8 (u8"DÆBÆR PLUGINS")), 140, 30, 300, 30, juce::Justification::left);
+    g.drawText (juce::String::fromUTF8 (u8"DÆBÆR PLUGINS"), 140, 30, 300, 30, juce::Justification::left);
 
     g.setFont (juce::FontOptions (15.0f, juce::Font::plain));
     g.setColour (juce::Colour (0xffaaaaaa));
@@ -78,12 +95,12 @@ void BPM2HzAudioProcessorEditor::paint (juce::Graphics& g)
     g.setColour (juce::Colour (0xff888888));
 
     g.drawText ("DIV", startX, startY, 60, rowHeight, juce::Justification::centred);
-    g.drawText ("NORM (ms)", startX + 70, startY, colWidth, rowHeight, juce::Justification::centred);
-    g.drawText ("NORM (Hz)", startX + 70 + colWidth, startY, colWidth, rowHeight, juce::Justification::centred);
-    g.drawText ("DOTTED (ms)", startX + 70 + colWidth * 2, startY, colWidth, rowHeight, juce::Justification::centred);
-    g.drawText ("DOTTED (Hz)", startX + 70 + colWidth * 3, startY, colWidth, rowHeight, juce::Justification::centred);
-    g.drawText ("TRIPLET (ms)", startX + 70 + colWidth * 4, startY, colWidth, rowHeight, juce::Justification::centred);
-    g.drawText ("TRIPLET (Hz)", startX + 70 + colWidth * 5, startY, colWidth, rowHeight, juce::Justification::centred);
+    g.drawText ("NORM (TIME)", startX + 70, startY, colWidth, rowHeight, juce::Justification::centred);
+    g.drawText ("NORM (FREQ)", startX + 70 + colWidth, startY, colWidth, rowHeight, juce::Justification::centred);
+    g.drawText ("DOTTED (TIME)", startX + 70 + colWidth * 2, startY, colWidth, rowHeight, juce::Justification::centred);
+    g.drawText ("DOTTED (FREQ)", startX + 70 + colWidth * 3, startY, colWidth, rowHeight, juce::Justification::centred);
+    g.drawText ("TRIPLET (TIME)", startX + 70 + colWidth * 4, startY, colWidth, rowHeight, juce::Justification::centred);
+    g.drawText ("TRIPLET (FREQ)", startX + 70 + colWidth * 5, startY, colWidth, rowHeight, juce::Justification::centred);
 
     g.setFont (juce::FontOptions (13.0f, juce::Font::plain));
     int currentY = startY + rowHeight;
@@ -101,17 +118,20 @@ void BPM2HzAudioProcessorEditor::paint (juce::Graphics& g)
         g.setColour (juce::Colours::white);
         g.drawText (item.name, startX, currentY, 60, rowHeight - 4, juce::Justification::centred);
 
+        // NORM
         g.setColour (juce::Colours::lightgreen);
-        g.drawText (juce::String (item.msNormal, 1), startX + 70, currentY, colWidth, rowHeight - 4, juce::Justification::centred);
-        g.drawText (juce::String (item.hzNormal, 2), startX + 70 + colWidth, currentY, colWidth, rowHeight - 4, juce::Justification::centred);
+        g.drawText (formatTime (item.msNormal), startX + 70, currentY, colWidth, rowHeight - 4, juce::Justification::centred);
+        g.drawText (formatFreq (item.hzNormal), startX + 70 + colWidth, currentY, colWidth, rowHeight - 4, juce::Justification::centred);
 
+        // DOTTED
         g.setColour (juce::Colours::orange);
-        g.drawText (juce::String (item.msDotted, 1), startX + 70 + colWidth * 2, currentY, colWidth, rowHeight - 4, juce::Justification::centred);
-        g.drawText (juce::String (item.hzDotted, 2), startX + 70 + colWidth * 3, currentY, colWidth, rowHeight - 4, juce::Justification::centred);
+        g.drawText (formatTime (item.msDotted), startX + 70 + colWidth * 2, currentY, colWidth, rowHeight - 4, juce::Justification::centred);
+        g.drawText (formatFreq (item.hzDotted), startX + 70 + colWidth * 3, currentY, colWidth, rowHeight - 4, juce::Justification::centred);
 
+        // TRIPLET
         g.setColour (juce::Colours::cyan);
-        g.drawText (juce::String (item.msTriplet, 1), startX + 70 + colWidth * 4, currentY, colWidth, rowHeight - 4, juce::Justification::centred);
-        g.drawText (juce::String (item.hzTriplet, 2), startX + 70 + colWidth * 5, currentY, colWidth, rowHeight - 4, juce::Justification::centred);
+        g.drawText (formatTime (item.msTriplet), startX + 70 + colWidth * 4, currentY, colWidth, rowHeight - 4, juce::Justification::centred);
+        g.drawText (formatFreq (item.hzTriplet), startX + 70 + colWidth * 5, currentY, colWidth, rowHeight - 4, juce::Justification::centred);
 
         currentY += rowHeight;
     }
