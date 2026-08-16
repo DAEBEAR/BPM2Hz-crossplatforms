@@ -22,16 +22,13 @@ public:
         auto bounds = juce::Rectangle<int> (x, y, width, height).toFloat().reduced (4.0f);
         auto radius = juce::jmin (bounds.getWidth(), bounds.getHeight()) / 2.0f;
         auto center = bounds.getCentre();
-        
         auto angle = rotaryStartAngle + sliderPosProportional * (rotaryEndAngle - rotaryStartAngle);
 
-        // Ricerca robusta dell'asset knob
         int assetSize = 0;
         const char* assetData = BinaryData::getNamedResource ("knob_png", assetSize);
         if (assetData == nullptr) assetData = BinaryData::getNamedResource ("knob.png", assetSize);
-        if (assetData == nullptr) assetData = BinaryData::getNamedResource ("KNOB_PNG", assetSize);
-        if (assetData == nullptr) assetData = BinaryData::getNamedResource ("KNOB.PNG", assetSize);
 
+        // Uso sicuro di ImageCache
         auto knobImage = (assetData != nullptr && assetSize > 0)
                             ? juce::ImageCache::getFromMemory (assetData, assetSize)
                             : juce::Image();
@@ -39,15 +36,12 @@ public:
         if (knobImage.isValid())
         {
             juce::Graphics::ScopedSaveState saveState (g);
-
             g.addTransform (juce::AffineTransform::rotation (angle, center.x, center.y));
-
             auto destRect = juce::Rectangle<float> (center.x - radius, center.y - radius, radius * 2.0f, radius * 2.0f);
             g.drawImage (knobImage, destRect, juce::RectanglePlacement::centred);
         }
         else
         {
-            // Fallback (quello che si vede nello screenshot)
             g.setColour (juce::Colours::darkgrey);
             g.fillEllipse (bounds);
         }
