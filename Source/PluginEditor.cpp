@@ -5,7 +5,25 @@
 BPM2HzAudioProcessorEditor::BPM2HzAudioProcessorEditor (BPM2HzAudioProcessor& p)
     : AudioProcessorEditor (&p), processorRef (p)
 {
-    setSize (750, 480);
+    setSize (750, 510);
+
+    addAndMakeVisible (syncButton);
+    syncButton.setColour (juce::ToggleButton::textColourId, juce::Colours::white);
+    syncButton.setColour (juce::ToggleButton::tickColourId, juce::Colours::cyan);
+
+    addAndMakeVisible (bpmSlider);
+    bpmSlider.setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
+    bpmSlider.setTextBoxStyle (juce::Slider::TextBoxBelow, false, 80, 20);
+    bpmSlider.setColour (juce::Slider::rotarySliderFillColourId, juce::Colours::cyan);
+    bpmSlider.setColour (juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
+    bpmSlider.setColour (juce::Slider::textBoxTextColourId, juce::Colours::cyan);
+
+    syncAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(
+        processorRef.apvts, "sync", syncButton);
+
+    bpmAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(
+        processorRef.apvts, "manualBpm", bpmSlider);
+
     startTimerHz (30);
 }
 
@@ -13,33 +31,35 @@ BPM2HzAudioProcessorEditor::~BPM2HzAudioProcessorEditor() {}
 
 void BPM2HzAudioProcessorEditor::timerCallback()
 {
+    bool isSynced = processorRef.apvts.getRawParameterValue ("sync")->load() > 0.5f;
+    bpmSlider.setEnabled (!isSynced);
     repaint();
+}
+
+void BPM2HzAudioProcessorEditor::resized()
+{
+    syncButton.setBounds (500, 35, 100, 30);
+    bpmSlider.setBounds (610, 10, 110, 100);
 }
 
 void BPM2HzAudioProcessorEditor::paint (juce::Graphics& g)
 {
     g.fillAll (juce::Colour (0xff121212));
 
-    // Utilizza daebaer_logo_png e daebaer_logo_pngSize
     auto logoImage = juce::ImageCache::getFromMemory (BinaryData::daebaer_logo_png, BinaryData::daebaer_logo_pngSize);
-    g.drawImageWithin (logoImage, 20, 20, 120, 120, juce::RectanglePlacement::centred);
+    g.drawImageWithin (logoImage, 20, 15, 110, 110, juce::RectanglePlacement::centred);
 
+    // Risoluzione errore caratteri speciali UTF-8 per DÆBÆR
     g.setColour (juce::Colours::white);
     g.setFont (juce::FontOptions (22.0f, juce::Font::bold));
-    g.drawText ("DÆBÆR PLUGINS", 160, 25, 300, 30, juce::Justification::left);
+    g.drawText (juce::CharPointer_UTF8 ("D\xc3\x86B\xc3\x86R PLUGINS"), 140, 30, 300, 30, juce::Justification::left);
 
-    g.setFont (juce::FontOptions (16.0f, juce::Font::plain));
+    g.setFont (juce::FontOptions (15.0f, juce::Font::plain));
     g.setColour (juce::Colour (0xffaaaaaa));
-    g.drawText ("BPM2Hz Converter", 160, 50, 300, 25, juce::Justification::left);
-
-    g.setColour (juce::Colour (0xff252525));
-    g.fillRoundedRectangle (550.0f, 20.0f, 170.0f, 60.0f, 8.0f);
-    g.setColour (juce::Colours::cyan);
-    g.setFont (juce::FontOptions (24.0f, juce::Font::bold));
-    g.drawText (juce::String (processorRef.currentBpm, 1) + " BPM", 550, 20, 170, 60, juce::Justification::centred);
+    g.drawText ("BPM2Hz Converter", 140, 58, 300, 25, juce::Justification::left);
 
     int startX = 20;
-    int startY = 130;
+    int startY = 140;
     int colWidth = 110;
     int rowHeight = 40;
 

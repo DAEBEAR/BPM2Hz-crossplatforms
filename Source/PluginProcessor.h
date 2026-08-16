@@ -1,16 +1,20 @@
 #pragma once
+
 #include <juce_audio_processors/juce_audio_processors.h>
 
 struct NoteTime
 {
     juce::String name;
     float multiplier;
-    float msNormal, hzNormal;
-    float msDotted, hzDotted;
-    float msTriplet, hzTriplet;
+    float msNormal { 0.0f };
+    float hzNormal { 0.0f };
+    float msDotted { 0.0f };
+    float hzDotted { 0.0f };
+    float msTriplet { 0.0f };
+    float hzTriplet { 0.0f };
 };
 
-class BPM2HzAudioProcessor : public juce::AudioProcessor
+class BPM2HzAudioProcessor  : public juce::AudioProcessor
 {
 public:
     BPM2HzAudioProcessor();
@@ -26,6 +30,7 @@ public:
     const juce::String getName() const override { return "BPM2Hz"; }
     bool acceptsMidi() const override { return false; }
     bool producesMidi() const override { return false; }
+    bool isMidiEffect() const override { return false; }
     double getTailLengthSeconds() const override { return 0.0; }
 
     int getNumPrograms() override { return 1; }
@@ -34,13 +39,18 @@ public:
     const juce::String getProgramName (int) override { return {}; }
     void changeProgramName (int, const juce::String&) override {}
 
-    void getStateInformation (juce::MemoryBlock&) override {}
-    void setStateInformation (const void*, int) override {}
+    void getStateInformation (juce::MemoryBlock& destData) override;
+    void setStateInformation (const void* data, int sizeInBytes) override;
 
-    float currentBpm { 120.0f };
+    void updateTable();
+
     std::vector<NoteTime> noteTable;
+    float currentBpm { 120.0f };
+
+    juce::AudioProcessorValueTreeState apvts;
 
 private:
-    void updateTable();
+    juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BPM2HzAudioProcessor)
 };
