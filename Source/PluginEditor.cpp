@@ -1,47 +1,3 @@
-#include "PluginProcessor.h"
-#include "PluginEditor.h"
-#include <BinaryData.h>
-
-BPM2HzAudioProcessorEditor::BPM2HzAudioProcessorEditor (BPM2HzAudioProcessor& p)
-    : AudioProcessorEditor (&p), processorRef (p)
-{
-    setSize (750, 510);
-
-    addAndMakeVisible (syncButton);
-    syncButton.setColour (juce::ToggleButton::textColourId, juce::Colours::white);
-    syncButton.setColour (juce::ToggleButton::tickColourId, juce::Colours::cyan);
-
-    addAndMakeVisible (bpmSlider);
-    bpmSlider.setSliderStyle (juce::Slider::RotaryHorizontalVerticalDrag);
-    bpmSlider.setTextBoxStyle (juce::Slider::TextBoxBelow, false, 80, 20);
-    bpmSlider.setColour (juce::Slider::rotarySliderFillColourId, juce::Colours::cyan);
-    bpmSlider.setColour (juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
-    bpmSlider.setColour (juce::Slider::textBoxTextColourId, juce::Colours::cyan);
-
-    syncAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(
-        processorRef.apvts, "sync", syncButton);
-
-    bpmAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(
-        processorRef.apvts, "manualBpm", bpmSlider);
-
-    startTimerHz (30);
-}
-
-BPM2HzAudioProcessorEditor::~BPM2HzAudioProcessorEditor() {}
-
-void BPM2HzAudioProcessorEditor::timerCallback()
-{
-    bool isSynced = processorRef.apvts.getRawParameterValue ("sync")->load() > 0.5f;
-    bpmSlider.setEnabled (!isSynced);
-    repaint();
-}
-
-void BPM2HzAudioProcessorEditor::resized()
-{
-    syncButton.setBounds (500, 35, 100, 30);
-    bpmSlider.setBounds (610, 10, 110, 100);
-}
-
 void BPM2HzAudioProcessorEditor::paint (juce::Graphics& g)
 {
     g.fillAll (juce::Colour (0xff121212));
@@ -49,10 +5,10 @@ void BPM2HzAudioProcessorEditor::paint (juce::Graphics& g)
     auto logoImage = juce::ImageCache::getFromMemory (BinaryData::daebaer_logo_png, BinaryData::daebaer_logo_pngSize);
     g.drawImageWithin (logoImage, 20, 15, 110, 110, juce::RectanglePlacement::centred);
 
-    // Risoluzione errore caratteri speciali UTF-8 per DÆBÆR
+    // Utilizzo del prefisso u8 per gestire correttamente i caratteri UTF-8 (Æ)
     g.setColour (juce::Colours::white);
     g.setFont (juce::FontOptions (22.0f, juce::Font::bold));
-    g.drawText (juce::CharPointer_UTF8 ("D\xc3\x86B\xc3\x86R PLUGINS"), 140, 30, 300, 30, juce::Justification::left);
+    g.drawText (juce::String (juce::CharPointer_UTF8 (u8"DÆBÆR PLUGINS")), 140, 30, 300, 30, juce::Justification::left);
 
     g.setFont (juce::FontOptions (15.0f, juce::Font::plain));
     g.setColour (juce::Colour (0xffaaaaaa));
