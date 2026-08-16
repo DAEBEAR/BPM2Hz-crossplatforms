@@ -20,7 +20,8 @@ void BPM2HzAudioProcessorEditor::paint (juce::Graphics& g)
 {
     g.fillAll (juce::Colour (0xff121212));
 
-    auto logoImage = juce::ImageCache::getFromMemory (BinaryData::DAEBAER_Logo_png, BinaryData::DAEBAER_Logo_pngSize);
+    // Utilizza daebaer_logo_png e daebaer_logo_pngSize
+    auto logoImage = juce::ImageCache::getFromMemory (BinaryData::daebaer_logo_png, BinaryData::daebaer_logo_pngSize);
     g.drawImageWithin (logoImage, 20, 20, 120, 120, juce::RectanglePlacement::centred);
 
     g.setColour (juce::Colours::white);
@@ -32,7 +33,7 @@ void BPM2HzAudioProcessorEditor::paint (juce::Graphics& g)
     g.drawText ("BPM2Hz Converter", 160, 50, 300, 25, juce::Justification::left);
 
     g.setColour (juce::Colour (0xff252525));
-    g.fillRoundedRectangle (550, 20, 170, 60, 8.0f);
+    g.fillRoundedRectangle (550.0f, 20.0f, 170.0f, 60.0f, 8.0f);
     g.setColour (juce::Colours::cyan);
     g.setFont (juce::FontOptions (24.0f, juce::Font::bold));
     g.drawText (juce::String (processorRef.currentBpm, 1) + " BPM", 550, 20, 170, 60, juce::Justification::centred);
@@ -63,7 +64,7 @@ void BPM2HzAudioProcessorEditor::paint (juce::Graphics& g)
         if (i % 2 == 0)
         {
             g.setColour (juce::Colour (0xff1a1a1a));
-            g.fillRoundedRectangle (startX, currentY, 710, rowHeight - 4, 4.0f);
+            g.fillRoundedRectangle (static_cast<float>(startX), static_cast<float>(currentY), 710.0f, static_cast<float>(rowHeight - 4), 4.0f);
         }
 
         g.setColour (juce::Colours::white);
