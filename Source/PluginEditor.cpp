@@ -64,7 +64,6 @@ void BPM2HzAudioProcessorEditor::timerCallback()
 
 void BPM2HzAudioProcessorEditor::resized()
 {
-    // Posizionamento della levetta analogica e del knob Distressor
     syncButton.setBounds (480, 48, 120, 36);
     bpmSlider.setBounds (615, 12, 120, 110);
 }
@@ -75,59 +74,51 @@ void BPM2HzAudioProcessorEditor::paint (juce::Graphics& g)
     auto height = static_cast<float> (getHeight());
 
     // -------------------------------------------------------------
-    // 1. EFFETTO METALLO NERO SPAZZOLATO (Brushed Black Metal)
+    // 1. SFONDO REALE DA IMMAGINE (BRUSHED METAL.jpg)
     // -------------------------------------------------------------
-    juce::ColourGradient metalGradient (
-        juce::Colour (0xff1c1f24), 0.0f, 0.0f,
-        juce::Colour (0xff111317), width, height, false);
-    metalGradient.addColour (0.4, juce::Colour (0xff242830));
-    metalGradient.addColour (0.7, juce::Colour (0xff15171c));
+    auto bgMetal = juce::ImageCache::getFromMemory (BinaryData::BRUSHED_METAL_jpg, BinaryData::BRUSHED_METAL_jpgSize);
     
-    g.setGradientFill (metalGradient);
-    g.fillAll();
-
-    // Micro-scanalature e graffi metallici orizzontali
-    juce::Random rng (12345);
-    for (int y = 0; y < getHeight(); y += 2)
+    if (bgMetal.isValid())
     {
-        float alpha = rng.nextFloat() * 0.04f;
-        if (rng.nextBool())
-            g.setColour (juce::Colours::white.withAlpha (alpha));
-        else
-            g.setColour (juce::Colours::black.withAlpha (alpha * 1.5f));
-
-        g.drawHorizontalLine (y, 0.0f, width);
+        g.drawImage (bgMetal, getLocalBounds().toFloat(), juce::RectanglePlacement::fillDestination);
+    }
+    else
+    {
+        g.fillAll (juce::Colour (0xff121417));
     }
 
-    // Vignettatura d'angolo e Bordo di finitura
+    // Vignettatura morbida d'angolo
     juce::ColourGradient vignette (
         juce::Colours::transparentBlack, width * 0.5f, height * 0.5f,
-        juce::Colour (0xaa000000), 0.0f, 0.0f, true);
+        juce::Colour (0xbb000000), 0.0f, 0.0f, true);
     g.setGradientFill (vignette);
     g.fillAll();
 
+    // Bordo del plugin
     g.setColour (juce::Colour (0x33ffffff));
     g.drawRect (0.0f, 0.0f, width, height, 1.0f);
 
     // -------------------------------------------------------------
-    // 2. HEADER PANEL (Logo e Branding)
+    // 2. HEADER PANEL (Pannello Superiore)
     // -------------------------------------------------------------
     juce::Rectangle<float> headerBox (15.0f, 12.0f, 730.0f, 110.0f);
     
-    g.setColour (juce::Colour (0xd90f1115));
+    g.setColour (juce::Colour (0xcc0b0d10));
     g.fillRoundedRectangle (headerBox, 8.0f);
     
     g.setColour (juce::Colour (0x22ffffff));
     g.drawRoundedRectangle (headerBox, 8.0f, 1.0f);
 
-    // Glow circolare azzurro dietro al logo DÆBÆR
-    g.setColour (juce::Colour (0x1800e5ff));
-    g.fillEllipse (20.0f, 15.0f, 100.0f, 100.0f);
-
+    // -------------------------------------------------------------
+    // LOGO DÆBÆR (Trasparente senza cerchio o sfondo dietro)
+    // -------------------------------------------------------------
     auto logoImage = juce::ImageCache::getFromMemory (BinaryData::daebaer_logo_png, BinaryData::daebaer_logo_pngSize);
-    g.drawImageWithin (logoImage, 25, 20, 90, 90, juce::RectanglePlacement::centred);
+    if (logoImage.isValid())
+    {
+        g.drawImageWithin (logoImage, 25, 20, 90, 90, juce::RectanglePlacement::centred);
+    }
 
-    // Testo sotto il logo: solo "PLUGINS"
+    // Testo sotto al logo: solo "PLUGINS"
     g.setFont (juce::FontOptions (13.0f, juce::Font::bold));
     g.setColour (juce::Colour (0xff00e5ff));
     g.drawText ("PLUGINS", 130, 48, 150, 20, juce::Justification::left);
@@ -182,7 +173,7 @@ void BPM2HzAudioProcessorEditor::paint (juce::Graphics& g)
 
         if (i % 2 == 0)
         {
-            g.setColour (juce::Colour (0x15ffffff));
+            g.setColour (juce::Colour (0x1a000000));
             g.fillRoundedRectangle (static_cast<float>(startX), static_cast<float>(currentY), 720.0f, static_cast<float>(rowHeight - 4), 5.0f);
         }
 

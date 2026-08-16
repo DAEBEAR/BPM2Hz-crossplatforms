@@ -2,8 +2,9 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "PluginProcessor.h"
+#include <BinaryData.h>
 
-// LookAndFeel personalizzato per Knob stile Distressor e Levetta Analogica
+// LookAndFeel per utilizzare l'immagine knob.png dagli assets e la Levetta Analogica
 class DistressorLNF : public juce::LookAndFeel_V4
 {
 public:
@@ -13,53 +14,41 @@ public:
         setColour (juce::Slider::textBoxTextColourId, juce::Colour (0xfff0f0f0));
     }
 
-    // Design Knob stile Empirical Labs Distressor
+    // Disegna il knob usando l'immagine originale knob.png dagli assets
     void drawRotarySlider (juce::Graphics& g, int x, int y, int width, int height,
                            float sliderPosProportional, float rotaryStartAngle,
                            float rotaryEndAngle, juce::Slider& slider) override
     {
-        auto bounds = juce::Rectangle<int> (x, y, width, height).toFloat().reduced (12.0f);
+        auto bounds = juce::Rectangle<int> (x, y, width, height).toFloat().reduced (4.0f);
         auto radius = juce::jmin (bounds.getWidth(), bounds.getHeight()) / 2.0f;
         auto center = bounds.getCentre();
-        auto toAngle = rotaryStartAngle + sliderPosProportional * (rotaryEndAngle - rotaryStartAngle);
+        
+        // Angolo corrente calcolato in base alla posizione dello slider
+        auto angle = rotaryStartAngle + sliderPosProportional * (rotaryEndAngle - rotaryStartAngle);
 
-        // Tacche numerate ed esterne attorno alla manopola
-        int numTicks = 11;
-        g.setColour (juce::Colour (0xbbffffff));
-        for (int i = 0; i < numTicks; ++i)
+        // Caricamento dell'immagine del knob dagli assets (knob.png)
+        auto knobImage = juce::ImageCache::getFromMemory (BinaryData::knob_png, BinaryData::knob_pngSize);
+
+        if (knobImage.isValid())
         {
-            float angle = rotaryStartAngle + (i / static_cast<float>(numTicks - 1)) * (rotaryEndAngle - rotaryStartAngle);
-            auto tickStart = center.getPointOnCircumference (radius + 2.0f, angle);
-            auto tickEnd   = center.getPointOnCircumference (radius + 7.0f, angle);
-            g.drawLine (tickStart.x, tickStart.y, tickEnd.x, tickEnd.y, (i % 2 == 0) ? 2.0f : 1.0f);
+            juce::Graphics::ScopedSaveState saveState (g);
+
+            // Applica la rotazione attorno al centro della manopola
+            g.addTransform (juce::AffineTransform::rotation (angle, center.x, center.y));
+
+            // Disegna l'immagine del knob centrandola nell'area riservata
+            auto destRect = juce::Rectangle<float> (center.x - radius, center.y - radius, radius * 2.0f, radius * 2.0f);
+            g.drawImage (knobImage, destRect, juce::RectanglePlacement::centred);
         }
-
-        // Corpo Esterno della Manopola (Base Nera e Zigrinata)
-        g.setColour (juce::Colour (0xff111215));
-        g.fillEllipse (bounds);
-        g.setColour (juce::Colour (0xff333742));
-        g.drawEllipse (bounds, 2.5f);
-
-        // Capsula Metallica Centrale
-        auto innerBounds = bounds.reduced (radius * 0.35f);
-        juce::ColourGradient capGradient (juce::Colour (0xff555d6b), innerBounds.getX(), innerBounds.getY(),
-                                           juce::Colour (0xff1c2026), innerBounds.getRight(), innerBounds.getBottom(), false);
-        g.setGradientFill (capGradient);
-        g.fillEllipse (innerBounds);
-        g.setColour (juce::Colour (0x44ffffff));
-        g.drawEllipse (innerBounds, 1.0f);
-
-        // Pointer Linea Bianca ad alto contrasto
-        juce::Path pointer;
-        auto pointerLength = radius - 3.0f;
-        pointer.addRectangle (-2.5f, -pointerLength, 5.0f, pointerLength * 0.65f);
-        pointer.applyTransform (juce::AffineTransform::rotation (toAngle).translated (center.x, center.y));
-
-        g.setColour (slider.isEnabled() ? juce::Colours::white : juce::Colour (0xff666666));
-        g.fillPath (pointer);
+        else
+        {
+            // Disegno di riserva se l'asset knob.png non viene trovato
+            g.setColour (juce::Colours::darkgrey);
+            g.fillEllipse (bounds);
+        }
     }
 
-    // Design Levetta Analogica (Toggle Switch Hardware)
+    // Design Levetta Analogica (Toggle Switch)
     void drawToggleButton (juce::Graphics& g, juce::ToggleButton& button,
                             bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) override
     {
