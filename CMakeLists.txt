@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 project(BPM2Hz VERSION 1.0.0)
 
-# Disabilita la build dei helper tools interni di JUCE che causano l'errore su macOS
 set(JUCE_BUILD_HELPER_TOOLS OFF CACHE BOOL "" FORCE)
 
 include(FetchContent)
@@ -22,9 +21,12 @@ juce_add_plugin(BPM2Hz
     COPY_PLUGIN_AFTER_BUILD FALSE
     PLUGIN_MANUFACTURER_CODE DAEB
     PLUGIN_CODE B2Hz
+    JUCE_VST3_CAN_REPLACE_VST2 FALSE
     FORMATS VST3 AU
     PRODUCT_NAME "BPM2Hz"
 )
+
+juce_generate_juce_header(BPM2Hz)
 
 juce_add_binary_data(AudioAssets
     SOURCES
@@ -37,6 +39,11 @@ target_sources(BPM2Hz
         Source/PluginProcessor.h
         Source/PluginEditor.cpp
         Source/PluginEditor.h
+)
+
+target_compile_definitions(BPM2Hz
+    PUBLIC
+        JUCE_VST3_CAN_REPLACE_VST2=0
 )
 
 target_link_libraries(BPM2Hz
