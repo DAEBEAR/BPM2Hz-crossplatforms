@@ -3,7 +3,8 @@
 
 BPM2HzAudioProcessor::BPM2HzAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
-     : AudioProcessor (BugsChannelSet (juce::AudioChannelSet::disabled(), juce::AudioChannelSet::disabled())),
+     : AudioProcessor (BusesProperties().withInput("Input", juce::AudioChannelSet::stereo(), true)
+                                       .withOutput("Output", juce::AudioChannelSet::stereo(), true)),
 #endif
        apvts (*this, nullptr, "Parameters", createParameterLayout())
 {
@@ -79,20 +80,20 @@ int BPM2HzAudioProcessor::getCurrentProgram()
     return 0;
 }
 
-void BPM2HzAudioProcessor::setCurrentProgram (int index)
+void BPM2HzAudioProcessor::setCurrentProgram (int)
 {
 }
 
-const juce::String BPM2HzAudioProcessor::getProgramName (int index)
+const juce::String BPM2HzAudioProcessor::getProgramName (int)
 {
     return {};
 }
 
-void BPM2HzAudioProcessor::changeProgramName (int index, const juce::String& newName)
+void BPM2HzAudioProcessor::changeProgramName (int, const juce::String&)
 {
 }
 
-void BPM2HzAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
+void BPM2HzAudioProcessor::prepareToPlay (double, int)
 {
 }
 
@@ -101,13 +102,13 @@ void BPM2HzAudioProcessor::releaseResources()
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
-bool BPM2HzAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
+bool BPM2HzAudioProcessor::isBusesLayoutSupported (const BusesLayout&) const
 {
     return true;
 }
 #endif
 
-void BPM2HzAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+void BPM2HzAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer&)
 {
     buffer.clear();
 
@@ -137,12 +138,11 @@ void BPM2HzAudioProcessor::updateBpmTable (float bpm)
     if (bpm <= 0.0f)
         return;
 
-    // Durata di un quarto di nota (Quarter Note / 1/4) in millisecondi
     double quarterNoteMs = (60.0 / static_cast<double>(bpm)) * 1000.0;
 
     struct DivisionInfo {
         juce::String name;
-        double factor; // Fattore moltiplicativo rispetto alla semiminima (1/4)
+        double factor;
     };
 
     std::vector<DivisionInfo> divisions = {
@@ -162,15 +162,12 @@ void BPM2HzAudioProcessor::updateBpmTable (float bpm)
         NoteValueVal note;
         note.name = div.name;
 
-        // Valore normale
         note.msNormal = quarterNoteMs * div.factor;
         note.hzNormal = 1000.0 / note.msNormal;
 
-        // Valore col punto (Dotted = x 1.5)
         note.msDotted = note.msNormal * 1.5;
         note.hzDotted = 1000.0 / note.msDotted;
 
-        // Valore terzinato (Triplet = x 2/3)
         note.msTriplet = note.msNormal * (2.0 / 3.0);
         note.hzTriplet = 1000.0 / note.msTriplet;
 
