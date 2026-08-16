@@ -1,11 +1,14 @@
 cmake_minimum_required(VERSION 3.22)
 project(BPM2Hz VERSION 1.0.0)
 
+# Disabilita la build dei helper tools interni di JUCE che causano l'errore su macOS
+set(JUCE_BUILD_HELPER_TOOLS OFF CACHE BOOL "" FORCE)
+
 include(FetchContent)
 FetchContent_Declare(
     JUCE
     GIT_REPOSITORY https://github.com/juce-framework/JUCE.git
-    GIT_TAG        8.0.0
+    GIT_TAG        master
 )
 FetchContent_MakeAvailable(JUCE)
 
