@@ -30,7 +30,9 @@ juce_generate_juce_header(BPM2Hz)
 
 juce_add_binary_data(AudioAssets
     SOURCES
-        Assets/daebaer_logo.png
+        assets/knob.png
+        assets/brushed_metal.jpg
+        assets/daebaer_logo.png
 )
 
 target_sources(BPM2Hz

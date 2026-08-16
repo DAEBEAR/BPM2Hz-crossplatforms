@@ -74,14 +74,17 @@ void BPM2HzAudioProcessorEditor::paint (juce::Graphics& g)
     auto height = static_cast<float> (getHeight());
 
     // -------------------------------------------------------------
-    // 1. SFONDO DA IMMAGINE (brushed_metal.jpg)
+    // 1. SFONDO DA IMMAGINE (Controllo multi-nome per brushed metal)
     // -------------------------------------------------------------
     int bgSize = 0;
     const char* bgData = BinaryData::getNamedResource ("brushed_metal_jpg", bgSize);
-    if (bgData == nullptr)
-        bgData = BinaryData::getNamedResource ("brushed_metal.jpg", bgSize);
+    if (bgData == nullptr) bgData = BinaryData::getNamedResource ("brushed_metal.jpg", bgSize);
+    if (bgData == nullptr) bgData = BinaryData::getNamedResource ("BRUSHED_METAL_jpg", bgSize);
+    if (bgData == nullptr) bgData = BinaryData::getNamedResource ("BRUSHED_METAL.jpg", bgSize);
 
-    auto bgMetal = juce::ImageCache::getFromMemory (bgData, bgSize);
+    auto bgMetal = (bgData != nullptr && bgSize > 0)
+                        ? juce::ImageCache::getFromMemory (bgData, bgSize)
+                        : juce::Image();
     
     if (bgMetal.isValid())
     {
@@ -119,10 +122,12 @@ void BPM2HzAudioProcessorEditor::paint (juce::Graphics& g)
     // -------------------------------------------------------------
     int logoSize = 0;
     const char* logoData = BinaryData::getNamedResource ("daebaer_logo_png", logoSize);
-    if (logoData == nullptr)
-        logoData = BinaryData::getNamedResource ("daebaer_logo.png", logoSize);
+    if (logoData == nullptr) logoData = BinaryData::getNamedResource ("daebaer_logo.png", logoSize);
 
-    auto logoImage = juce::ImageCache::getFromMemory (logoData, logoSize);
+    auto logoImage = (logoData != nullptr && logoSize > 0)
+                        ? juce::ImageCache::getFromMemory (logoData, logoSize)
+                        : juce::Image();
+                        
     if (logoImage.isValid())
     {
         g.drawImageWithin (logoImage, 25, 20, 90, 90, juce::RectanglePlacement::centred);

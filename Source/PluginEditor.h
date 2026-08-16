@@ -25,12 +25,16 @@ public:
         
         auto angle = rotaryStartAngle + sliderPosProportional * (rotaryEndAngle - rotaryStartAngle);
 
+        // Ricerca robusta dell'asset knob
         int assetSize = 0;
         const char* assetData = BinaryData::getNamedResource ("knob_png", assetSize);
-        if (assetData == nullptr)
-            assetData = BinaryData::getNamedResource ("knob.png", assetSize);
+        if (assetData == nullptr) assetData = BinaryData::getNamedResource ("knob.png", assetSize);
+        if (assetData == nullptr) assetData = BinaryData::getNamedResource ("KNOB_PNG", assetSize);
+        if (assetData == nullptr) assetData = BinaryData::getNamedResource ("KNOB.PNG", assetSize);
 
-        auto knobImage = juce::ImageCache::getFromMemory (assetData, assetSize);
+        auto knobImage = (assetData != nullptr && assetSize > 0)
+                            ? juce::ImageCache::getFromMemory (assetData, assetSize)
+                            : juce::Image();
 
         if (knobImage.isValid())
         {
@@ -43,6 +47,7 @@ public:
         }
         else
         {
+            // Fallback (quello che si vede nello screenshot)
             g.setColour (juce::Colours::darkgrey);
             g.fillEllipse (bounds);
         }
