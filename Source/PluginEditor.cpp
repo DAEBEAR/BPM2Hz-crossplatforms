@@ -35,19 +35,14 @@ BPM2HzAudioProcessorEditor::BPM2HzAudioProcessorEditor (BPM2HzAudioProcessor& p)
     bpmAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(
         processorRef.apvts, "manualBpm", bpmSlider);
 
-    // 20 Hz (50ms) è sufficiente per l'interfaccia e riduce la pressione sulla CPU/Thread grafico
     startTimerHz (20);
 }
 
 BPM2HzAudioProcessorEditor::~BPM2HzAudioProcessorEditor()
 {
-    // FERMA IL TIMER PRIMA DI DISTRUGGERE IL LOOK AND FEEL
     stopTimer();
-    
-    // Rimuovi gli attachment prima di resettare i LookAndFeel
     syncAttachment = nullptr;
     bpmAttachment = nullptr;
-    
     setLookAndFeel (nullptr);
 }
 
@@ -58,7 +53,6 @@ void BPM2HzAudioProcessorEditor::timerCallback()
     if (isSynced)
     {
         bpmSlider.setEnabled (false);
-        // Usa una variabile atomic se leggibile da processor, altrimenti leggi il valore in modo sicuro
         bpmSlider.setValue (processorRef.currentBpm, juce::dontSendNotification);
     }
     else
@@ -66,7 +60,6 @@ void BPM2HzAudioProcessorEditor::timerCallback()
         bpmSlider.setEnabled (true);
     }
 
-    // Ridisegna solo se l'editor è visibile a schermo
     if (isShowing())
         repaint();
 }
@@ -82,7 +75,9 @@ void BPM2HzAudioProcessorEditor::paint (juce::Graphics& g)
     auto width = static_cast<float> (getWidth());
     auto height = static_cast<float> (getHeight());
 
-    // 1. SFONDO REALE DA IMMAGINE
+    // -------------------------------------------------------------
+    // 1. SFONDO REALE DA IMMAGINE (BRUSHED METAL)
+    // -------------------------------------------------------------
     int bgSize = 0;
     const char* bgData = BinaryData::getNamedResource ("brushed_metal_jpg", bgSize);
     if (bgData == nullptr) bgData = BinaryData::getNamedResource ("brushed_metal.jpg", bgSize);
@@ -96,25 +91,27 @@ void BPM2HzAudioProcessorEditor::paint (juce::Graphics& g)
     else
         g.fillAll (juce::Colour (0xff121417));
 
-    // Vignettatura
+    // Vignettatura morbida
     juce::ColourGradient vignette (
         juce::Colours::transparentBlack, width * 0.5f, height * 0.5f,
         juce::Colour (0xbb000000), 0.0f, 0.0f, true);
     g.setGradientFill (vignette);
     g.fillAll();
 
-    // Bordo
+    // Bordo esterno plugin
     g.setColour (juce::Colour (0x33ffffff));
     g.drawRect (0.0f, 0.0f, width, height, 1.0f);
 
+    // -------------------------------------------------------------
     // 2. HEADER PANEL
+    // -------------------------------------------------------------
     juce::Rectangle<float> headerBox (15.0f, 12.0f, 730.0f, 110.0f);
     g.setColour (juce::Colour (0xcc0b0d10));
     g.fillRoundedRectangle (headerBox, 8.0f);
     g.setColour (juce::Colour (0x22ffffff));
     g.drawRoundedRectangle (headerBox, 8.0f, 1.0f);
 
-    // LOGO
+    // LOGO DÆBÆR
     int logoSize = 0;
     const char* logoData = BinaryData::getNamedResource ("daebaer_logo_png", logoSize);
     if (logoData == nullptr) logoData = BinaryData::getNamedResource ("daebaer_logo.png", logoSize);
@@ -124,93 +121,111 @@ void BPM2HzAudioProcessorEditor::paint (juce::Graphics& g)
                         : juce::Image();
                         
     if (logoImage.isValid())
-        g.drawImageWithin (logoImage, 25, 20, 90, 90, juce::RectanglePlacement::centred);
+    {
+        // Logo centrato verticalmente a sinistra
+        g.drawImageWithin (logoImage, 25, 18, 75, 75, juce::RectanglePlacement::centred);
+    }
 
-    g.setFont (juce::FontOptions (13.0f, juce::Font::bold));
-    g.setColour (juce::Colour (0xff00e5ff));
-    g.drawText ("PLUGINS", 130, 48, 150, 20, juce::Justification::left);
+    // SCRITTA "PLUGINS" SOTTO IL LOGO IN BIANCO TRASPARENTE
+    g.setFont (juce::FontOptions (10.0f, juce::Font::bold));
+    g.setColour (juce::Colour (0x88ffffff)); // Bianco trasparente stile logo
+    g.drawText ("PLUGINS", 20, 93, 85, 15, juce::Justification::centred);
 
-    g.setFont (juce::FontOptions (14.0f, juce::Font::plain));
-    g.setColour (juce::Colour (0xff8a95a5));
-    g.drawText ("BPM2Hz Converter", 130, 68, 200, 22, juce::Justification::left);
+    // NOME PLUGIN AFFIANCO
+    g.setFont (juce::FontOptions (16.0f, juce::Font::bold));
+    g.setColour (juce::Colour (0xffe0e0e0));
+    g.drawText ("BPM2Hz Converter", 125, 48, 220, 24, juce::Justification::left);
 
-    // 3. PANNELLO TABELLA
+    // -------------------------------------------------------------
+    // 3. PANNELLO TABELLA SEMI-TRASPARENTE
+    // -------------------------------------------------------------
     juce::Rectangle<float> tableBox (15.0f, 132.0f, 730.0f, 375.0f);
     g.setColour (juce::Colour (0xcc0b0d10));
     g.fillRoundedRectangle (tableBox, 8.0f);
     g.setColour (juce::Colour (0x22ffffff));
     g.drawRoundedRectangle (tableBox, 8.0f, 1.0f);
 
-    // 4. HEADER COLONNE
+    // -------------------------------------------------------------
+    // 4. TABELLA VALORI (Header Colonne in Scala di Grigi)
+    // -------------------------------------------------------------
     int startX = 20;
     int startY = 140;
     int colWidth = 110;
     int rowHeight = 42;
 
-    g.setFont (juce::FontOptions (12.0f, juce::Font::bold));
-    g.setColour (juce::Colour (0xff8a95a5));
+    g.setFont (juce::FontOptions (11.0f, juce::Font::bold));
+
+    g.setColour (juce::Colour (0xff8a95a5)); // Grigio chiaro
     g.drawText ("DIV", startX, startY, 60, rowHeight, juce::Justification::centred);
 
-    struct HeaderDef { juce::String title; juce::Colour color; int colIdx; };
-    std::vector<HeaderDef> headers = {
-        { "NORM (TIME)",   juce::Colour (0xff00f5d4), 0 },
-        { "NORM (FREQ)",   juce::Colour (0xff00f5d4), 1 },
-        { "DOTTED (TIME)", juce::Colour (0xffffb703), 2 },
-        { "DOTTED (FREQ)", juce::Colour (0xffffb703), 3 },
-        { "TRIPLET (TIME)",juce::Colour (0xff00b4d8), 4 },
-        { "TRIPLET (FREQ)",juce::Colour (0xff00b4d8), 5 }
+    juce::String headers[6] = {
+        "NORM (TIME)", "NORM (FREQ)",
+        "DOTTED (TIME)", "DOTTED (FREQ)",
+        "TRIPLET (TIME)", "TRIPLET (FREQ)"
     };
 
-    for (const auto& h : headers)
+    for (int col = 0; col < 6; ++col)
     {
-        int xPos = startX + 70 + (colWidth * h.colIdx);
-        g.setColour (h.color);
-        g.drawText (h.title, xPos, startY, colWidth, rowHeight, juce::Justification::centred);
+        int xPos = startX + 70 + (colWidth * col);
+        g.setColour (juce::Colour (0xffb0b8c4)); // Scala di grigi leggibile
+        g.drawText (headers[col], xPos, startY, colWidth, rowHeight, juce::Justification::centred);
     }
 
-    g.setColour (juce::Colour (0x20ffffff));
+    // Linea Orizzontale Separatore Header
+    g.setColour (juce::Colour (0x30ffffff));
     g.drawLine (static_cast<float>(startX), static_cast<float>(startY + rowHeight - 2),
                 static_cast<float>(startX + 720), static_cast<float>(startY + rowHeight - 2), 1.0f);
 
-    // 5. RENDERING TABELLA THREAD-SAFE
-    // Fai una copia locale rapida o accedi in modo thread-safe ai dati del processor
+    // -------------------------------------------------------------
+    // 5. RIGHE DELLA TABELLA E LINEE VERTICALI
+    // -------------------------------------------------------------
     int currentY = startY + rowHeight;
-
-    // Se noteTable nel Processor viene usata in processBlock, fai uno spinlock/scoped_lock prima di iterare.
-    // In alternativa, se noteTable è costante nelle dimensioni, itera in modo sicuro:
     const size_t numRows = processorRef.noteTable.size();
 
     for (size_t i = 0; i < numRows; ++i)
     {
-        const auto item = processorRef.noteTable[i]; // Copia locale dell'elemento per evitare conflitti
+        const auto item = processorRef.noteTable[i];
 
+        // Sfondo riga alternato
         if (i % 2 == 0)
         {
             g.setColour (juce::Colour (0x12ffffff));
             g.fillRoundedRectangle (static_cast<float>(startX), static_cast<float>(currentY), 720.0f, static_cast<float>(rowHeight - 4), 4.0f);
         }
 
+        // Nome Divisione (Bianco Nitido)
         g.setColour (juce::Colour (0xffffffff));
         g.setFont (juce::FontOptions (13.0f, juce::Font::bold));
         g.drawText (item.name, startX, currentY, 60, rowHeight - 4, juce::Justification::centred);
 
+        // Valori in Scala di Grigi (Alto Contrasto)
         g.setFont (juce::FontOptions (13.0f, juce::Font::plain));
+        g.setColour (juce::Colour (0xffd1d5db)); // Grigio bilanciato ad alta leggibilità
 
-        // NORM
-        g.setColour (juce::Colour (0xffb7effb)); 
-        g.drawText (formatTime (item.msNormal), startX + 70, currentY, colWidth, rowHeight - 4, juce::Justification::centred);
-        g.drawText (formatFreq (item.hzNormal), startX + 70 + colWidth, currentY, colWidth, rowHeight - 4, juce::Justification::centred);
-
-        // DOTTED
-        g.setColour (juce::Colour (0xffffe3a8)); 
-        g.drawText (formatTime (item.msDotted), startX + 70 + colWidth * 2, currentY, colWidth, rowHeight - 4, juce::Justification::centred);
-        g.drawText (formatFreq (item.hzDotted), startX + 70 + colWidth * 3, currentY, colWidth, rowHeight - 4, juce::Justification::centred);
-
-        // TRIPLET
-        g.setColour (juce::Colour (0xff90e0ef)); 
+        g.drawText (formatTime (item.msNormal),  startX + 70,                currentY, colWidth, rowHeight - 4, juce::Justification::centred);
+        g.drawText (formatFreq (item.hzNormal),  startX + 70 + colWidth,     currentY, colWidth, rowHeight - 4, juce::Justification::centred);
+        g.drawText (formatTime (item.msDotted),  startX + 70 + colWidth * 2, currentY, colWidth, rowHeight - 4, juce::Justification::centred);
+        g.drawText (formatFreq (item.hzDotted),  startX + 70 + colWidth * 3, currentY, colWidth, rowHeight - 4, juce::Justification::centred);
         g.drawText (formatTime (item.msTriplet), startX + 70 + colWidth * 4, currentY, colWidth, rowHeight - 4, juce::Justification::centred);
         g.drawText (formatFreq (item.hzTriplet), startX + 70 + colWidth * 5, currentY, colWidth, rowHeight - 4, juce::Justification::centred);
 
         currentY += rowHeight;
+    }
+
+    // -------------------------------------------------------------
+    // 6. LINEE VERTICALI DI SEPARAZIONE TABELLA
+    // -------------------------------------------------------------
+    g.setColour (juce::Colour (0x1affffff)); // Grigio sfumato semi-trasparente
+
+    // Linea tra "DIV" e i valori
+    g.drawLine (static_cast<float>(startX + 65), static_cast<float>(startY + 6),
+                static_cast<float>(startX + 65), static_cast<float>(startY + 360), 1.0f);
+
+    // Linee tra ogni colonna di dati
+    for (int col = 1; col < 6; ++col)
+    {
+        int xLine = startX + 70 + (colWidth * col);
+        g.drawLine (static_cast<float>(xLine), static_cast<float>(startY + 6),
+                    static_cast<float>(xLine), static_cast<float>(startY + 360), 1.0f);
     }
 }

@@ -10,7 +10,7 @@ public:
     DistressorLNF()
     {
         setColour (juce::Slider::textBoxOutlineColourId, juce::Colours::transparentBlack);
-        setColour (juce::Slider::textBoxTextColourId, juce::Colour (0xfff0f0f0));
+        setColour (juce::Slider::textBoxTextColourId, juce::Colour (0xffe0e0e0));
     }
 
     void drawRotarySlider (juce::Graphics& g, int x, int y, int width, int height,
@@ -28,7 +28,6 @@ public:
         const char* assetData = BinaryData::getNamedResource ("knob_png", assetSize);
         if (assetData == nullptr) assetData = BinaryData::getNamedResource ("knob.png", assetSize);
 
-        // Uso sicuro di ImageCache
         auto knobImage = (assetData != nullptr && assetSize > 0)
                             ? juce::ImageCache::getFromMemory (assetData, assetSize)
                             : juce::Image();
@@ -69,7 +68,8 @@ public:
         g.setGradientFill (leverGrad);
         g.fillRoundedRectangle (lever, 2.0f);
 
-        g.setColour (button.getToggleState() ? juce::Colour (0xff00e5ff) : juce::Colour (0xffaaaaaa));
+        // TESTO "DAW SYNC" BIANCO
+        g.setColour (juce::Colour (0xffffffff));
         g.setFont (juce::FontOptions (12.0f, juce::Font::bold));
         g.drawText (button.getButtonText(), bounds.reduced (6.0f, 0.0f), juce::Justification::centredLeft);
     }
