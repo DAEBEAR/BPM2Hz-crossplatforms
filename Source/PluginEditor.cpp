@@ -32,7 +32,19 @@ BPM2HzAudioProcessorEditor::~BPM2HzAudioProcessorEditor() {}
 void BPM2HzAudioProcessorEditor::timerCallback()
 {
     bool isSynced = processorRef.apvts.getRawParameterValue ("sync")->load() > 0.5f;
-    bpmSlider.setEnabled (!isSynced);
+
+    if (isSynced)
+    {
+        // Disabilita l'interazione ma aggiorna il valore visivo con quello rilevato dalla DAW
+        bpmSlider.setEnabled (false);
+        bpmSlider.setValue (processorRef.currentBpm, juce::dontSendNotification);
+    }
+    else
+    {
+        // Riabilita la manopola per il controllo manuale
+        bpmSlider.setEnabled (true);
+    }
+
     repaint();
 }
 
