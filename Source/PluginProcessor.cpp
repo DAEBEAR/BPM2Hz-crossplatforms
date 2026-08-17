@@ -2,17 +2,11 @@
 #include "PluginEditor.h"
 
 BPM2HzAudioProcessor::BPM2HzAudioProcessor()
-#ifndef JucePlugin_PreferredChannelConfigurations
-     : AudioProcessor (BusesProperties()
-                     #ifndef JucePlugin_IsMidiEffect
-                      #ifndef JucePlugin_IsSynth
-                       .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
-                      #endif
-                       .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
-                     #endif
-                       ),
-#endif
-       apvts (*this, nullptr, "Parameters", createParameterLayout())
+    : AudioProcessor (BusesProperties()
+                        .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
+                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
+                     ),
+      apvts (*this, nullptr, "Parameters", createParameterLayout())
 {
 }
 
@@ -39,63 +33,16 @@ const juce::String BPM2HzAudioProcessor::getName() const
     return JucePlugin_Name;
 }
 
-bool BPM2HzAudioProcessor::acceptsMidi() const
-{
-   #if JucePlugin_WantsMidiInput
-    return true;
-   #else
-    return false;
-   #endif
-}
+bool BPM2HzAudioProcessor::acceptsMidi() const { return false; }
+bool BPM2HzAudioProcessor::producesMidi() const { return false; }
+bool BPM2HzAudioProcessor::isMidiEffect() const { return false; }
+double BPM2HzAudioProcessor::getTailLengthSeconds() const { return 0.0; }
 
-bool BPM2HzAudioProcessor::producesMidi() const
-{
-   #if JucePlugin_ProducesMidiOutput
-    return true;
-   #else
-    return false;
-   #endif
-}
-
-bool BPM2HzAudioProcessor::isMidiEffect() const
-{
-   #if JucePlugin_IsMidiEffect
-    return true;
-   #else
-    return false;
-   #endif
-}
-
-double BPM2HzAudioProcessor::getTailLengthSeconds() const
-{
-    return 0.0;
-}
-
-int BPM2HzAudioProcessor::getNumPrograms()
-{
-    return 1;
-}
-
-int BPM2HzAudioProcessor::getCurrentProgram()
-{
-    return 0;
-}
-
-void BPM2HzAudioProcessor::setCurrentProgram (int index)
-{
-    juce::ignoreUnused (index);
-}
-
-const juce::String BPM2HzAudioProcessor::getProgramName (int index)
-{
-    juce::ignoreUnused (index);
-    return {};
-}
-
-void BPM2HzAudioProcessor::changeProgramName (int index, const juce::String& newName)
-{
-    juce::ignoreUnused (index, newName);
-}
+int BPM2HzAudioProcessor::getNumPrograms() { return 1; }
+int BPM2HzAudioProcessor::getCurrentProgram() { return 0; }
+void BPM2HzAudioProcessor::setCurrentProgram (int index) { juce::ignoreUnused (index); }
+const juce::String BPM2HzAudioProcessor::getProgramName (int index) { juce::ignoreUnused (index); return {}; }
+void BPM2HzAudioProcessor::changeProgramName (int index, const juce::String& newName) { juce::ignoreUnused (index, newName); }
 
 void BPM2HzAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
@@ -110,21 +57,16 @@ void BPM2HzAudioProcessor::releaseResources()
 #ifndef JucePlugin_PreferredChannelConfigurations
 bool BPM2HzAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 {
-  #if JucePlugin_IsMidiEffect
-    juce::ignoreUnused (layouts);
-    return true;
-  #else
+    // Accetta solo configurazioni Mono/Mono o Stereo/Stereo
     if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
      && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
         return false;
 
-   #if ! JucePlugin_IsSynth
+    // Assicura che i canali di ingresso e uscita abbiano la stessa disposizione
     if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet())
         return false;
-   #endif
 
     return true;
-  #endif
 }
 #endif
 
@@ -174,17 +116,7 @@ void BPM2HzAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
     juce::ignoreUnused (midiMessages);
     juce::ScopedNoDenormals noDenormals;
 
-    auto totalNumInputChannels  = getTotalNumInputChannels();
-    auto totalNumOutputChannels = getTotalNumOutputChannels();
-
-    // Clear solo dei canali di output in eccesso (se p.es. entri in Mono ed esci in Stereo)
-    for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-        buffer.clear (i, 0, buffer.getNumSamples());
-
-    // NOTA: I canali audio da 0 a totalNumInputChannels - 1 NON vengono toccati.
-    // L'audio passa trasparentemente dall'ingresso all'uscita (Passthrough).
-
-    // --- Calcolo dei BPM e della tabella Hz/ms ---
+    // 1. Lettura parametri e gestione tempo
     bool isSynced = apvts.getRawParameterValue ("sync")->load() > 0.5f;
     double targetBpm = 120.0;
 
@@ -208,12 +140,12 @@ void BPM2HzAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
 
     currentBpm.store (static_cast<float> (targetBpm));
     updateNoteTable (targetBpm);
+
+    // NON facciamo buffer.clear() in nessun punto. 
+    // L'audio passa direttamente dall'ingresso all'uscita.
 }
 
-bool BPM2HzAudioProcessor::hasEditor() const
-{
-    return true;
-}
+bool BPM2HzAudioProcessor::hasEditor() const { return true; }
 
 juce::AudioProcessorEditor* BPM2HzAudioProcessor::createEditor()
 {
