@@ -3,32 +3,36 @@ cmake_minimum_required(VERSION 3.22)
 # Nome del Progetto
 project(BPM2Hz VERSION 1.0.0 LANGUAGES C CXX)
 
-# Standard C++17 richiesto da JUCE 7/8
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # ------------------------------------------------------------------------------
-# 1. RECUPERO O INCLUSIONE DI JUCE
+# 1. SCARICAMENTO AUTOMATICO DI JUCE (FetchContent)
 # ------------------------------------------------------------------------------
-# Se JUCE è stato scaricato come sottocartella o tramite FetchContent
-if(NOT TARGET juce::juce_recommended_config_flags)
-    add_subdirectory(_deps/juce-src EXCLUDE_FROM_ALL) # Modifica il percorso se la cartella JUCE è diversa
-endif()
+include(FetchContent)
+
+FetchContent_Declare(
+    juce
+    GIT_REPOSITORY https://github.com/juce-framework/JUCE.git
+    GIT_TAG        8.0.0 # Puoi specificare master, develop o una versione (es. 7.0.12)
+)
+
+FetchContent_MakeAvailable(juce)
 
 # ------------------------------------------------------------------------------
-# 2. DEFINIZIONE DEL PLUGIN JUCE
+# 2. DEFINIZIONE DEL PLUGIN JUCE (Utility Audio Pass-Through)
 # ------------------------------------------------------------------------------
 juce_add_plugin(BPM2Hz
-    COMPANY_NAME "DAEBAER"                      # Nome Produttore
-    IS_SYNTH FALSE                              # FONDAMENTALE: Impostare su FALSE per permettere il Pass-Through Audio
-    NEEDS_MIDI_INPUT FALSE                      # Impostare su TRUE solo se si inviano note MIDI al plugin
+    COMPANY_NAME "DAEBAER"
+    IS_SYNTH FALSE                              # Pass-through audio abilitato
+    NEEDS_MIDI_INPUT FALSE
     NEEDS_MIDI_OUTPUT FALSE
     IS_MIDI_EFFECT FALSE
     EDITOR_WANTS_KEYBOARD_FOCUS FALSE
-    COPY_PLUGIN_AFTER_BUILD TRUE                # Copia automatica del VST3/AU nelle cartelle di sistema dopo la build
-    PLUGIN_MANUFACTURER_CODE Daeb               # Codice ID Produttore (4 caratteri)
-    PLUGIN_CODE B2hz                            # Codice ID Plugin (4 caratteri)
-    FORMATS VST3 AU                             # Formati da compilare
+    COPY_PLUGIN_AFTER_BUILD TRUE
+    PLUGIN_MANUFACTURER_CODE Daeb
+    PLUGIN_CODE B2hz
+    FORMATS VST3 AU
     PRODUCT_NAME "BPM2Hz"
 )
 
@@ -44,18 +48,17 @@ target_sources(BPM2Hz
 )
 
 # ------------------------------------------------------------------------------
-# 4. GESTIONE DEGLI ASSET BINARI (Immagini, Logo, Sfondi)
+# 4. GESTIONE RISORSE BINARIE (Immagini/Assets)
 # ------------------------------------------------------------------------------
-# Compila e include automaticamente le risorse grafiche da BinaryData
+# Se le immagini si trovano direttamente dentro "Source/", modifica il percorso sotto
 juce_add_binary_data(AudioAssets
     SOURCES
-        Source/Assets/brushed_metal.jpg
-        Source/Assets/daebaer_logo.png
-        Source/Assets/knob.png
+        Source/brushed_metal.jpg
+        Source/daebaer_logo.png
 )
 
 # ------------------------------------------------------------------------------
-# 5. LIBRERIE E MODULI JUCE COLLEGATI
+# 5. LIBRERIE E MODULI JUCE
 # ------------------------------------------------------------------------------
 target_link_libraries(BPM2Hz
     PRIVATE
@@ -75,7 +78,7 @@ target_link_libraries(BPM2Hz
 )
 
 # ------------------------------------------------------------------------------
-# 6. COMPILAZIONE E DEFINIZIONI TARGET
+# 6. DEFINIZIONI TARGET
 # ------------------------------------------------------------------------------
 target_compile_definitions(BPM2Hz
     PUBLIC
