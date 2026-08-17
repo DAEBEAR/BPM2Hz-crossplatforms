@@ -1,87 +1,59 @@
 cmake_minimum_required(VERSION 3.22)
+project(BPM2Hz VERSION 1.0.0)
 
-# Nome del Progetto
-project(BPM2Hz VERSION 1.0.0 LANGUAGES C CXX)
+set(JUCE_BUILD_HELPER_TOOLS OFF CACHE BOOL "" FORCE)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-# ------------------------------------------------------------------------------
-# 1. FETCHCONTENT DI JUCE
-# ------------------------------------------------------------------------------
 include(FetchContent)
-
 FetchContent_Declare(
-    juce
+    JUCE
     GIT_REPOSITORY https://github.com/juce-framework/JUCE.git
-    GIT_TAG        8.0.0
+    GIT_TAG        master
 )
+FetchContent_MakeAvailable(JUCE)
 
-FetchContent_MakeAvailable(juce)
-
-# ------------------------------------------------------------------------------
-# 2. DEFINIZIONE DEL PLUGIN JUCE (Utility Audio Pass-Through)
-# ------------------------------------------------------------------------------
 juce_add_plugin(BPM2Hz
-    COMPANY_NAME "DAEBAER"
-    IS_SYNTH FALSE                              # Disattivato per consentire il pass-through audio
+    COMPANY_NAME "DAEBAER Plugins"
+    IS_SYNTH FALSE
     NEEDS_MIDI_INPUT FALSE
     NEEDS_MIDI_OUTPUT FALSE
     IS_MIDI_EFFECT FALSE
     EDITOR_WANTS_KEYBOARD_FOCUS FALSE
-    COPY_PLUGIN_AFTER_BUILD TRUE
-    PLUGIN_MANUFACTURER_CODE Daeb
-    PLUGIN_CODE B2hz
+    COPY_PLUGIN_AFTER_BUILD FALSE
+    PLUGIN_MANUFACTURER_CODE DAEB
+    PLUGIN_CODE B2Hz
+    JUCE_VST3_CAN_REPLACE_VST2 FALSE
     FORMATS VST3 AU
     PRODUCT_NAME "BPM2Hz"
 )
 
-# ------------------------------------------------------------------------------
-# 3. SORGENTI
-# ------------------------------------------------------------------------------
-target_sources(BPM2Hz
-    PRIVATE
-        Source/PluginProcessor.h
-        Source/PluginProcessor.cpp
-        Source/PluginEditor.h
-        Source/PluginEditor.cpp
-)
+juce_generate_juce_header(BPM2Hz)
 
-# ------------------------------------------------------------------------------
-# 4. GESTIONE ASSET BINARI (Percorsi aggiornati alla cartella Assets)
-# ------------------------------------------------------------------------------
 juce_add_binary_data(AudioAssets
     SOURCES
-        Source/Assets/brushed_metal.jpg
-        Source/Assets/daebaer_logo.png
+        assets/knob.png
+        assets/brushed_metal.jpg
+        assets/daebaer_logo.png
 )
 
-# ------------------------------------------------------------------------------
-# 5. LIBRERIE E MODULI LINKATI
-# ------------------------------------------------------------------------------
+target_sources(BPM2Hz
+    PRIVATE
+        Source/PluginProcessor.cpp
+        Source/PluginProcessor.h
+        Source/PluginEditor.cpp
+        Source/PluginEditor.h
+)
+
+target_compile_definitions(BPM2Hz
+    PUBLIC
+        JUCE_VST3_CAN_REPLACE_VST2=0
+)
+
 target_link_libraries(BPM2Hz
     PRIVATE
         AudioAssets
         juce::juce_audio_utils
-        juce::juce_audio_processors
-        juce::juce_gui_extra
-        juce::juce_gui_basics
-        juce::juce_graphics
-        juce::juce_events
-        juce::juce_core
-        juce::juce_data_structures
     PUBLIC
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags
-)
-
-# ------------------------------------------------------------------------------
-# 6. DEFINIZIONI TARGET
-# ------------------------------------------------------------------------------
-target_compile_definitions(BPM2Hz
-    PUBLIC
-        JUCE_WEB_BROWSER=0
-        JUCE_USE_CURL=0
-        JUCE_VST3_CAN_REPLACE_VST2=0
 )

@@ -177,9 +177,14 @@ void BPM2HzAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
+    // Clear solo dei canali di output in eccesso (se p.es. entri in Mono ed esci in Stereo)
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
+    // NOTA: I canali audio da 0 a totalNumInputChannels - 1 NON vengono toccati.
+    // L'audio passa trasparentemente dall'ingresso all'uscita (Passthrough).
+
+    // --- Calcolo dei BPM e della tabella Hz/ms ---
     bool isSynced = apvts.getRawParameterValue ("sync")->load() > 0.5f;
     double targetBpm = 120.0;
 
