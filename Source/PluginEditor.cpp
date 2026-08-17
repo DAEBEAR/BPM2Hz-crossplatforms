@@ -53,7 +53,7 @@ void BPM2HzAudioProcessorEditor::timerCallback()
     if (isSynced)
     {
         bpmSlider.setEnabled (false);
-        bpmSlider.setValue (processorRef.currentBpm, juce::dontSendNotification);
+        bpmSlider.setValue (processorRef.currentBpm.load(), juce::dontSendNotification);
     }
     else
     {
@@ -91,19 +91,19 @@ void BPM2HzAudioProcessorEditor::paint (juce::Graphics& g)
     else
         g.fillAll (juce::Colour (0xff121417));
 
-    // Vignettatura morbida
+    // Vignettatura morbida d'angolo
     juce::ColourGradient vignette (
         juce::Colours::transparentBlack, width * 0.5f, height * 0.5f,
         juce::Colour (0xbb000000), 0.0f, 0.0f, true);
     g.setGradientFill (vignette);
     g.fillAll();
 
-    // Bordo esterno plugin
+    // Bordo del plugin
     g.setColour (juce::Colour (0x33ffffff));
     g.drawRect (0.0f, 0.0f, width, height, 1.0f);
 
     // -------------------------------------------------------------
-    // 2. HEADER PANEL
+    // 2. HEADER PANEL (Pannello Superiore)
     // -------------------------------------------------------------
     juce::Rectangle<float> headerBox (15.0f, 12.0f, 730.0f, 110.0f);
     g.setColour (juce::Colour (0xcc0b0d10));
@@ -111,7 +111,7 @@ void BPM2HzAudioProcessorEditor::paint (juce::Graphics& g)
     g.setColour (juce::Colour (0x22ffffff));
     g.drawRoundedRectangle (headerBox, 8.0f, 1.0f);
 
-    // LOGO DÆBÆR
+    // LOGO DÆBÆR (Opaco al 100%, Colori Originali)
     int logoSize = 0;
     const char* logoData = BinaryData::getNamedResource ("daebaer_logo_png", logoSize);
     if (logoData == nullptr) logoData = BinaryData::getNamedResource ("daebaer_logo.png", logoSize);
@@ -122,13 +122,13 @@ void BPM2HzAudioProcessorEditor::paint (juce::Graphics& g)
                         
     if (logoImage.isValid())
     {
-        // Logo centrato verticalmente a sinistra
+        g.setColour (juce::Colours::white);
         g.drawImageWithin (logoImage, 25, 18, 75, 75, juce::RectanglePlacement::centred);
     }
 
-    // SCRITTA "PLUGINS" SOTTO IL LOGO IN BIANCO TRASPARENTE
+    // SCRITTA "PLUGINS" SOTTO IL LOGO
     g.setFont (juce::FontOptions (10.0f, juce::Font::bold));
-    g.setColour (juce::Colour (0x88ffffff)); // Bianco trasparente stile logo
+    g.setColour (juce::Colour (0xccffffff));
     g.drawText ("PLUGINS", 20, 93, 85, 15, juce::Justification::centred);
 
     // NOME PLUGIN AFFIANCO
@@ -137,7 +137,7 @@ void BPM2HzAudioProcessorEditor::paint (juce::Graphics& g)
     g.drawText ("BPM2Hz Converter", 125, 48, 220, 24, juce::Justification::left);
 
     // -------------------------------------------------------------
-    // 3. PANNELLO TABELLA SEMI-TRASPARENTE
+    // 3. PANNELLO SEMI-TRASPARENTE PER LA TABELLA
     // -------------------------------------------------------------
     juce::Rectangle<float> tableBox (15.0f, 132.0f, 730.0f, 375.0f);
     g.setColour (juce::Colour (0xcc0b0d10));
@@ -155,7 +155,7 @@ void BPM2HzAudioProcessorEditor::paint (juce::Graphics& g)
 
     g.setFont (juce::FontOptions (11.0f, juce::Font::bold));
 
-    g.setColour (juce::Colour (0xff8a95a5)); // Grigio chiaro
+    g.setColour (juce::Colour (0xff8a95a5));
     g.drawText ("DIV", startX, startY, 60, rowHeight, juce::Justification::centred);
 
     juce::String headers[6] = {
@@ -167,7 +167,7 @@ void BPM2HzAudioProcessorEditor::paint (juce::Graphics& g)
     for (int col = 0; col < 6; ++col)
     {
         int xPos = startX + 70 + (colWidth * col);
-        g.setColour (juce::Colour (0xffb0b8c4)); // Scala di grigi leggibile
+        g.setColour (juce::Colour (0xffb0b8c4));
         g.drawText (headers[col], xPos, startY, colWidth, rowHeight, juce::Justification::centred);
     }
 
@@ -177,7 +177,7 @@ void BPM2HzAudioProcessorEditor::paint (juce::Graphics& g)
                 static_cast<float>(startX + 720), static_cast<float>(startY + rowHeight - 2), 1.0f);
 
     // -------------------------------------------------------------
-    // 5. RIGHE DELLA TABELLA E LINEE VERTICALI
+    // 5. RIGHE DELLA TABELLA
     // -------------------------------------------------------------
     int currentY = startY + rowHeight;
     const size_t numRows = processorRef.noteTable.size();
@@ -193,14 +193,14 @@ void BPM2HzAudioProcessorEditor::paint (juce::Graphics& g)
             g.fillRoundedRectangle (static_cast<float>(startX), static_cast<float>(currentY), 720.0f, static_cast<float>(rowHeight - 4), 4.0f);
         }
 
-        // Nome Divisione (Bianco Nitido)
+        // Nome Divisione
         g.setColour (juce::Colour (0xffffffff));
         g.setFont (juce::FontOptions (13.0f, juce::Font::bold));
         g.drawText (item.name, startX, currentY, 60, rowHeight - 4, juce::Justification::centred);
 
-        // Valori in Scala di Grigi (Alto Contrasto)
+        // Valori in Scala di Grigi ad Alto Contrasto
         g.setFont (juce::FontOptions (13.0f, juce::Font::plain));
-        g.setColour (juce::Colour (0xffd1d5db)); // Grigio bilanciato ad alta leggibilità
+        g.setColour (juce::Colour (0xffd1d5db));
 
         g.drawText (formatTime (item.msNormal),  startX + 70,                currentY, colWidth, rowHeight - 4, juce::Justification::centred);
         g.drawText (formatFreq (item.hzNormal),  startX + 70 + colWidth,     currentY, colWidth, rowHeight - 4, juce::Justification::centred);
@@ -215,13 +215,13 @@ void BPM2HzAudioProcessorEditor::paint (juce::Graphics& g)
     // -------------------------------------------------------------
     // 6. LINEE VERTICALI DI SEPARAZIONE TABELLA
     // -------------------------------------------------------------
-    g.setColour (juce::Colour (0x1affffff)); // Grigio sfumato semi-trasparente
+    g.setColour (juce::Colour (0x1affffff));
 
-    // Linea tra "DIV" e i valori
+    // Separatore tra "DIV" e i valori
     g.drawLine (static_cast<float>(startX + 65), static_cast<float>(startY + 6),
                 static_cast<float>(startX + 65), static_cast<float>(startY + 360), 1.0f);
 
-    // Linee tra ogni colonna di dati
+    // Separatori tra colonne
     for (int col = 1; col < 6; ++col)
     {
         int xLine = startX + 70 + (colWidth * col);
