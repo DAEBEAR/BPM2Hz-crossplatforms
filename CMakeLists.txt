@@ -6,12 +6,9 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # ------------------------------------------------------------------------------
-# 1. OPTION E FETCHCONTENT DI JUCE (Fix juceaide su CI/CD)
+# 1. FETCHCONTENT DI JUCE
 # ------------------------------------------------------------------------------
 include(FetchContent)
-
-# Impedisce a JUCE di compilare tool grafici superflui durante la configurazione
-set(JUCE_BUILD_HELPER_TOOLS ON CACHE BOOL "" FORCE)
 
 FetchContent_Declare(
     juce
@@ -22,7 +19,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(juce)
 
 # ------------------------------------------------------------------------------
-# 2. DEFINIZIONE DEL PLUGIN JUCE (Audio Utility Pass-Through)
+# 2. DEFINIZIONE DEL PLUGIN JUCE
 # ------------------------------------------------------------------------------
 juce_add_plugin(BPM2Hz
     COMPANY_NAME "DAEBAER"
