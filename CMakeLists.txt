@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
+# Nome del Progetto
 project(BPM2Hz VERSION 1.0.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -19,11 +20,11 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(juce)
 
 # ------------------------------------------------------------------------------
-# 2. DEFINIZIONE DEL PLUGIN JUCE
+# 2. DEFINIZIONE DEL PLUGIN JUCE (Utility Audio Pass-Through)
 # ------------------------------------------------------------------------------
 juce_add_plugin(BPM2Hz
     COMPANY_NAME "DAEBAER"
-    IS_SYNTH FALSE
+    IS_SYNTH FALSE                              # Disattivato per consentire il pass-through audio
     NEEDS_MIDI_INPUT FALSE
     NEEDS_MIDI_OUTPUT FALSE
     IS_MIDI_EFFECT FALSE
@@ -47,16 +48,16 @@ target_sources(BPM2Hz
 )
 
 # ------------------------------------------------------------------------------
-# 4. GESTIONE ASSET BINARI
+# 4. GESTIONE ASSET BINARI (Percorsi aggiornati alla cartella Assets)
 # ------------------------------------------------------------------------------
 juce_add_binary_data(AudioAssets
     SOURCES
-        Source/brushed_metal.jpg
-        Source/daebaer_logo.png
+        Source/Assets/brushed_metal.jpg
+        Source/Assets/daebaer_logo.png
 )
 
 # ------------------------------------------------------------------------------
-# 5. LIBRERIE LINKATE
+# 5. LIBRERIE E MODULI LINKATI
 # ------------------------------------------------------------------------------
 target_link_libraries(BPM2Hz
     PRIVATE
