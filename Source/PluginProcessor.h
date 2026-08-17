@@ -1,6 +1,7 @@
 #pragma once
 
 #include <juce_audio_processors/juce_audio_processors.h>
+#include <atomic>
 
 struct NoteValueVal
 {
@@ -47,12 +48,12 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
-    void updateBpmTable (float bpm);
-
-    std::vector<NoteValueVal> noteTable;
-    float currentBpm { 120.0f };
-
     juce::AudioProcessorValueTreeState apvts;
+    
+    std::atomic<float> currentBpm { 120.0f };
+    std::vector<NoteValueVal> noteTable;
+
+    void updateNoteTable (double bpm);
 
 private:
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();

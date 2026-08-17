@@ -100,7 +100,7 @@ void BPM2HzAudioProcessor::changeProgramName (int index, const juce::String& new
 void BPM2HzAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     juce::ignoreUnused (sampleRate, samplesPerBlock);
-    updateNoteTable (currentBpm.load());
+    updateNoteTable (static_cast<double> (currentBpm.load()));
 }
 
 void BPM2HzAudioProcessor::releaseResources()
@@ -133,7 +133,6 @@ void BPM2HzAudioProcessor::updateNoteTable (double bpm)
     if (bpm <= 0.0)
         return;
 
-    // Durata in ms di 1/4 (semiminima)
     double quarterMs = (60.0 / bpm) * 1000.0;
 
     struct DivFactor { juce::String name; double factor; };
@@ -147,30 +146,26 @@ void BPM2HzAudioProcessor::updateNoteTable (double bpm)
         { "1/64",  0.0625 }
     };
 
-    std::vector<NoteValue> tempTable;
+    std::vector<NoteValueVal> tempTable;
     tempTable.reserve (factors.size());
 
     for (const auto& f : factors)
     {
-        NoteValue nv;
+        NoteValueVal nv;
         nv.name = f.name;
 
-        // Normal
         nv.msNormal = quarterMs * f.factor;
         nv.hzNormal = 1000.0 / nv.msNormal;
 
-        // Dotted (* 1.5)
         nv.msDotted = nv.msNormal * 1.5;
         nv.hzDotted = 1000.0 / nv.msDotted;
 
-        // Triplet (/ 1.5)
         nv.msTriplet = nv.msNormal / 1.5;
         nv.hzTriplet = 1000.0 / nv.msTriplet;
 
         tempTable.push_back (nv);
     }
 
-    // Aggiornamento sicuro
     noteTable = tempTable;
 }
 
@@ -182,11 +177,9 @@ void BPM2HzAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
-    // Pulizia dei canali di uscita extra se ce ne sono più degli ingressi
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    // 1. LETTURA BPM DA DAW
     bool isSynced = apvts.getRawParameterValue ("sync")->load() > 0.5f;
     double targetBpm = 120.0;
 
@@ -208,11 +201,8 @@ void BPM2HzAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce:
         targetBpm = static_cast<double> (apvts.getRawParameterValue ("manualBpm")->load());
     }
 
-    currentBpm.store (targetBpm);
+    currentBpm.store (static_cast<float> (targetBpm));
     updateNoteTable (targetBpm);
-
-    // 2. PASS-THROUGH AUDIO
-    // Il buffer NON viene azzerato: l'audio passa inalterato.
 }
 
 bool BPM2HzAudioProcessor::hasEditor() const
