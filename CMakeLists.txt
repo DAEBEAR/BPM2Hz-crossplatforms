@@ -1,30 +1,32 @@
 cmake_minimum_required(VERSION 3.22)
 
-# Nome del Progetto
 project(BPM2Hz VERSION 1.0.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # ------------------------------------------------------------------------------
-# 1. SCARICAMENTO AUTOMATICO DI JUCE (FetchContent)
+# 1. OPTION E FETCHCONTENT DI JUCE (Fix juceaide su CI/CD)
 # ------------------------------------------------------------------------------
 include(FetchContent)
+
+# Impedisce a JUCE di compilare tool grafici superflui durante la configurazione
+set(JUCE_BUILD_HELPER_TOOLS ON CACHE BOOL "" FORCE)
 
 FetchContent_Declare(
     juce
     GIT_REPOSITORY https://github.com/juce-framework/JUCE.git
-    GIT_TAG        8.0.0 # Puoi specificare master, develop o una versione (es. 7.0.12)
+    GIT_TAG        8.0.0
 )
 
 FetchContent_MakeAvailable(juce)
 
 # ------------------------------------------------------------------------------
-# 2. DEFINIZIONE DEL PLUGIN JUCE (Utility Audio Pass-Through)
+# 2. DEFINIZIONE DEL PLUGIN JUCE (Audio Utility Pass-Through)
 # ------------------------------------------------------------------------------
 juce_add_plugin(BPM2Hz
     COMPANY_NAME "DAEBAER"
-    IS_SYNTH FALSE                              # Pass-through audio abilitato
+    IS_SYNTH FALSE
     NEEDS_MIDI_INPUT FALSE
     NEEDS_MIDI_OUTPUT FALSE
     IS_MIDI_EFFECT FALSE
@@ -37,7 +39,7 @@ juce_add_plugin(BPM2Hz
 )
 
 # ------------------------------------------------------------------------------
-# 3. SORGENTI DEL PROGETTO
+# 3. SORGENTI
 # ------------------------------------------------------------------------------
 target_sources(BPM2Hz
     PRIVATE
@@ -48,9 +50,8 @@ target_sources(BPM2Hz
 )
 
 # ------------------------------------------------------------------------------
-# 4. GESTIONE RISORSE BINARIE (Immagini/Assets)
+# 4. GESTIONE ASSET BINARI
 # ------------------------------------------------------------------------------
-# Se le immagini si trovano direttamente dentro "Source/", modifica il percorso sotto
 juce_add_binary_data(AudioAssets
     SOURCES
         Source/brushed_metal.jpg
@@ -58,7 +59,7 @@ juce_add_binary_data(AudioAssets
 )
 
 # ------------------------------------------------------------------------------
-# 5. LIBRERIE E MODULI JUCE
+# 5. LIBRERIE LINKATE
 # ------------------------------------------------------------------------------
 target_link_libraries(BPM2Hz
     PRIVATE
